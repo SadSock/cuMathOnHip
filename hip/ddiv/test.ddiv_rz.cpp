@@ -215,8 +215,8 @@ int main(int argc, char *argv[]) {
   hipMalloc((void **)&inputBuffer_y, (batchlength) * sizeof(double));
   hipMalloc((void **)&outputBuffer, (batchlength) * sizeof(double));
 
-  FILE *fp_random = fopen("/home/cj/float.random.txt", "r");
-  FILE *fp_ret = fopen("/home/cj/hip__ddiv_rz.txt", "w");
+  FILE *fp_random = fopen("../../float.random.txt", "r");
+  FILE *fp_ret = fopen("../../hip__ddiv_rz.txt", "w");
 
   hipEventCreate(&gpuStart);
   hipEventCreate(&gpuEnd);
