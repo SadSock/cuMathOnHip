@@ -4,7 +4,7 @@
 *.lo
 *.o
 *.obj
-
+.ccls-cache/
 # Precompiled Headers
 *.gch
 *.pch
