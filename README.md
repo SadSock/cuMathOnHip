@@ -1,2 +1,1 @@
-# fuck_nvidia
-nvidia fuckyou
+nvidia fuck!!!
