@@ -12,7 +12,7 @@ using namespace std;
 
 static constexpr uint64_t neg_nan_hex = 0xfff8000000000000;
 #define neg_nan (*((double*)(&neg_nan_hex)));
-
+#define iszero(a) (a == 0.0)
 #define rounding_mode_ru (0x4)
 #define rounding_mode_rz (0xc)
 #define rounding_mode_rd (0x8)
