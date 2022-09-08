@@ -1,0 +1,170 @@
+div(double &, double, double):
+ IMAD.MOV.U32 R1, RZ, RZ, c[0x0][0x28]
+ MOV R0, 0x30
+ CALL.REL.NOINC `($div(double &, double, double)$__cuda_sm20_div_ru_f64)
+ IMAD.MOV.U32 R2, RZ, RZ, R4
+ ULDC.64 UR4, c[0x0][0x160]
+ IMAD.MOV.U32 R3, RZ, RZ, R5
+ STG.E.64.SYS [UR4], R2
+ EXIT
+
+y = x1 / x0
+div(double y, double x1, double x0)
+
+$div(double &, double, double)$__cuda_sm20_div_ru_f64:
+ IMAD.MOV.U32 R12, RZ, RZ, c[0x0][0x174]. 	     	// x0_hi
+ IMAD.MOV.U32 R3, RZ, RZ, c[0x0][0x16c]     		// x1_hi
+ IMAD.SHL.U32 R2, R12, 0x2, RZ                      // x0_hi << 1, if 1.0, r0_hi = 0x3ff0,
+ IMAD.SHL.U32 R14, R3, 0x2, RZ                      // x1_hi << 1, if 10.0, r1_hi = 0x4024, << 1 = 0x8048
+ IMAD.MOV.U32 R10, RZ, RZ, c[0x0][0x168]            // R10 = x1_lo
+ SHF.R.U32.HI R15, RZ, 0x15, R2                    // x0_exp_bias = (x0_hi << 1) >> 21; R15 = x0_exp_bias,
+ IMAD.MOV.U32 R11, RZ, RZ, c[0x0][0x16c]            // R11 = x1_hi
+ LEA.HI R16, R14, 0xffffffff, RZ, 0xb  // R16 = 3, 402 - 3ff // 0x8048->0x0401, 0x8048's exp=0x402
+ IMAD.MOV.U32 R9, RZ, RZ, c[0x0][0x170]             // R9 = x0_lo
+ IADD3 R17, R15, -0x1, RZ                           // R17 = (R15 = x0_exp_bias - 0x1)
+ IMAD.MOV.U32 R8, RZ, RZ, c[0x0][0x174].            // R8 = x0_hi
+ ISETP.GT.U32.AND P0, PT, R17, 0x7fd, PT            // R17 = x0_exp_bias - 1, if (x0_exp_bias - Ox1 > 0x7fd) {
+ ISETP.GT.U32.OR P0, PT, R16, 0x7fd, P0             // R16 = x1_exp_bias - 1，if (x1_exp_bias - Ox1 > 0x7fd || x0_exp_bias - Ox1 > 0x7fd) {
+ @!P0 BRA `(.L_x_0)  // ---------------------------P0 BRA `(.L_x_0) -----------------------------
+ IMAD.MOV.U32 R4, RZ, RZ, c[0x0][0x168]   // R4 = x1_lo
+ IMAD.MOV.U32 R5, RZ, RZ, c[0x0][0x16c]   // R5 = x1_hi
+ DSETP.GTU.AND P0, PT, |R4|, +INF , PT    // if (isnan(x1)） {
+ @P0 LOP3.LUT R3, R3, 0x80000, RZ, 0xfc, !PT  //     R3 = (x1_hi << 1) | 0x80000
+ @P0 IMAD.MOV.U32 R2, RZ, RZ, R10             //     R2 = R10 = x1_lo}
+ @P0 BRA `(.L_x_1)  // ---------------------------P0 BRA `(.L_x_1) -----------------------------
+ IMAD.MOV.U32 R6, RZ, RZ, c[0x0][0x170]       //  R6 = x0_lo
+ IMAD.MOV.U32 R7, RZ, RZ, c[0x0][0x174].      //  R7 = x0_hi
+ DSETP.GTU.AND P0, PT, |R6|, +INF , PT.       // if (isnan(x0)） {
+ @P0 LOP3.LUT R3, R12, 0x80000, RZ, 0xfc, !PT.    // R3 = *x0_hi = *x0_hi | 0x80000
+ @P0 IMAD.MOV.U32 R2, RZ, RZ, R9                  // R2 = *x0_lo, R9 = x0_lo }
+ @P0 BRA `(.L_x_1) // ---------------------------P0 BRA `(.L_x_1) -----------------------------
+ DSETP.NEU.AND P0, PT, RZ, c[0x0][0x168], PT   // x1 == 0.0?  // -- dsetp P0
+ DSETP.NEU.AND P1, PT, RZ, c[0x0][0x170], PT   // x0 == 0.0?  // -- dsetp p1
+ SEL R2, RZ, 0x1, P0 
+ SEL R13, RZ, 0x1, P1
+ LOP3.LUT P0, RZ, R2, R13, RZ, 0xc0, !PT    //  判断 (x0 == 0.0) & (x1 == 0.0)
+ @P0 BRA `(.L_x_2)  // ---------------------------P0 BRA `(.L_x_2) -----------------------------
+ DSETP.NEU.AND P1, PT, |R6|, +INF , PT.  // P1 != isinf(|x0|)
+ DSETP.NEU.AND P0, PT, |R4|, +INF , PT.  // P0 != isinf(|x1|)
+ DSETP.NEU.OR P2, PT, |R4|, +INF , P1    // P2 = !isinf(|x0|) || !isinf(|x1|)， 判断不存在inf， 不存在P2 = true
+ @P2 BRA `(.L_x_3)  // ---------------------------P2 BRA `(.L_x_3) -----------------------------
+.L_x_2: // -------------------------------------------------------
+ IMAD.MOV.U32 R2, RZ, RZ, 0x0.                  // R2 = 0
+ IMAD.MOV.U32 R3, RZ, RZ, -0x80000              // R3 = -0x80000
+ BRA `(.L_x_1)  // -------------------------------------------------------
+.L_x_3: // -------------------------------------------------------
+ SEL R3, RZ, 0x1, P1 
+ LOP3.LUT P1, RZ, R3, R2, RZ, 0xfc, !PT  	// 不存在inf
+ @P1 LOP3.LUT R2, R12, c[0x0][0x16c], RZ, 0x3c, !PT    //  若R3 = *x0_hi ^ *x1_hi
+ @P1 LOP3.LUT R3, R2, 0x80000000, RZ, 0xc0, !PT // 
+ @P1 IMAD.MOV.U32 R2, RZ, RZ, RZ
+ @P1 BRA `(.L_x_1)  // -------------------------------------------------------
+ SEL R2, RZ, 0x1, P0 // x1为inf，R2 = 0
+ LOP3.LUT P0, RZ, R2, R13, RZ, 0xfc, !PT，  // P0 = R2 | R13,  x1=inf | x0 == 0.0
+ @P0 LOP3.LUT R12, R12, c[0x0][0x16c], RZ, 0x3c, !PT  // R12 = x0_hi & x1_hi
+ @P0 IMAD.MOV.U32 R2, RZ, RZ, RZ                    // R2 = 0
+ @P0 LOP3.LUT R12, R12, 0x80000000, RZ, 0xc0, !PT  // x0_hi = x0_hi & 0x80000000;//inf
+ @P0 LOP3.LUT R3, R12, 0x7ff00000, RZ, 0xfc, !PT   // x0_hi = x0_hi ^ 0x7ff00000;//inf
+ @P0 BRA `(.L_x_1)  // -------------------------------------------------------
+ ISETP.GE.AND P0, PT, R16, RZ, PT // !x1_exp_bias == 0, x1_exp_bias - 1 >= 0, not denorm
+ ISETP.GE.AND P1, PT, R17, RZ, PT  // !x0_exp_bias == 0, x0_exp_bias - 1 >= 0, not denorm
+ @!P0 DMUL R2, R4, 1.80143985094819840000e+16.   // if x1 denorm, R4 = x1, //R2 = x1 = x1 * 1.8....(2^54)
+ @!P0 IMAD.MOV.U32 R16, RZ, RZ, -0x36  //  x1_exp_scale = -0x36; 分子为负
+ @P0 IMAD.MOV.U32 R16, RZ, RZ, RZ      // else x1_exp_scale = 0
+ @!P0 IMAD.MOV.U32 R10, RZ, RZ, R2     //  R10 = x1_lo
+ @!P0 IMAD.MOV.U32 R11, RZ, RZ, R3 	// R11 = x1_hi
+ @P1 BRA `(.L_x_4)  // -------------------------------------------------------
+ DMUL R2, R6, 1.80143985094819840000e+16  // if x0 denorm, //R2 = x0 = x0 * 1.8....(2^54)
+ IADD3 R16, R16, 0x36, RZ    // x1_exp_scale = x1_exp_scale + 0x36 // 分母为正
+ IMAD.MOV.U32 R9, RZ, RZ, R2    // R9 = x0 * 1.8....(2^54)  hi/lo？
+ IMAD.MOV.U32 R8, RZ, RZ, R3	// R8/R9 = R2:R3 = x0 * 1.8....(2^54)  hi/lo？
+ BRA `(.L_x_4)  // -------------------------------------------------------
+.L_x_0: // -------------------------------------------------------
+ IMAD.MOV.U32 R16, RZ, RZ, RZ
+.L_x_4: // -------------------------------------------------------
+ IADD3 R5, R15, -0x3ff, RZ                  // R5 = x0_exp_true = x0_exp_bias - Ox3ff, R15= x0_exp_bias
+ IMAD.MOV.U32 R4, RZ, RZ, R9                // R4 = R9 = x0_lo
+ LEA.HI R15, R14.reuse, -R15, RZ, 0xb 		// R15 = x1_exp_bias, R14 = x1_hi << 1, exp_dif = x1_exp_bias - x0_exp_bias = 0x402-0x3ff =3
+ IMAD.MOV.U32 R2, RZ, RZ, 0x1.   		// R2 = 1
+ IMAD R5, R5, -0x100000, R8		// R5 = x0_exp_true, *x0_hi = *x0_hi - (x0_exp_true << 20)
+ LEA.HI R8, R14, 0xfffffc01, RZ, 0xb	// R8 = x1_exp_true = x1_exp_bias - Ox3ff
+ MUFU.RCP64H R3, R5                      // r0 (R2 : R3) = rcp64(*x0)
+ IMAD R11, R8, -0x100000, R11		 // R8 = x1_exp_true, R11 = *x1_hi = *x1_hi - (x1_exp_true << 20)
+ DFMA R6, -R4, R2, 1	// R6 = d1 = -x0 * r0  + 1.0
+ DFMA R8, R2, R6, R2    // R8 = r1 = r0 * d1 + r0
+ DMUL R6, R6, R6        // R6 = dd1 = d1 * d1
+ DMUL R2, R2, R10       // R2 = s1 = r0 * x1
+ DFMA R6, R8, R6, R8    // R6 = r2 = r1 * dd1 + r1
+ DFMA R12, -R4, R2, R10 // R12 = s2 = -x0 * s1 + x1 = (-x0 * r0 + 1) * x1
+ DFMA R8, -R4, R6, 1	 // R8 = d2 = -x0 * r2  + 1
+ DFMA R2, R6, R12, R2	 // R2 = r3 = r2 * s2 + s1   ---> (r2 * d1 * x1) + r0 * x1 = x1 * (r2 * d1 + r0)
+ DFMA R8, R6, R8, R6	// R8 = r4 = r2 * d2 + r2
+ DFMA R10, -R4, R2, R10 	// R10 = d3 = -x0 * r3 + x1 = (-x0 * r3' + 1) * x1
+ DFMA.RP R6, R8, R10, R2  	// R6 = r5_ru = fma.rp: r4 * d3 + r3      // self 10.0 / 1.0 ru:4024:0000
+ IMAD.SHL.U32 R4, R7, 0x2, RZ   // R4 = x5_hi << 1
+ SHF.R.U32.HI R4, RZ, 0x15, R4	// R4 = r5_exp_raw (x5_hi << 1) >> 21
+ IADD3 R15, R16, R15, R4        // R15 r5_exp_true = x1_exp_scale + exp_diff + r5_exp_raw
+ IADD3 R5, R15, -0x1, RZ        // R5 = r5_exp_true -1 
+ ISETP.GT.U32.AND P0, PT, R5, 0x7fd, PT // if (r5_exp_true -1 > 0x7fd )
+ @!P0 IMAD.IADD R5, R15, 0x1, -R4     // else R5 = r5_exp_true - r5_exp_raw,    3= 402 -3ff
+ @!P0 IMAD.MOV.U32 R4, RZ, RZ, R6 // R4 = r5_ru;
+ @!P0 IMAD R5, R5, 0x100000, R7     // R5 = *x5_hi + ((r5_exp_true - r5_exp_raw) << 20)   // 0x40240000 = 3 * 0x100000 + 0x3ff40000
+ @!P0 BRA `(.L_x_5)
+ IADD3 R5, R15, -0x3ff, RZ     // R5 = r5_exp_s = r5_exp_true - 0x3ff
+ LOP3.LUT R17, R7, 0x80000000, RZ, 0xc0, !PT        //  *x5_hi & 0x80000000
+ ISETP.GT.AND P1, PT, R5, 0x3ff, PT    // if (r5_exp_s > 0x3ff)
+ @P1 IMAD.MOV.U32 R4, RZ, RZ, 0x7fefffff   //  R4 = 0x7fefffff
+ @P1 ISETP.NE.AND P0, PT, R17, RZ, PT	// P0 = r5_sign != 0
+ @P1 SEL R4, R4, 0x7ff00000, P0    	// if(r5_sign != 0) R4 = 0x7ff00000
+ @P1 SEL R12, RZ, 0xffffffff, !P0	// if (r5_sign != 0) R12 = 0xffffffff
+ @P1 BRA `(.L_x_6)
+ ISETP.GE.AND P0, PT, R5, -0x434, PT // P0 = r5_exp_s >= -0x434
+ ISETP.EQ.AND P1, PT, R17, RZ, PT    // P1 = x5_sign == 0
+ @!P0 SEL R12, RZ, 0x1, !P1    	// 
+ @!P0 IMAD.MOV.U32 R4, RZ, RZ, RZ
+ @!P0 BRA `(.L_x_6)  // -------------------------------------------------------
+
+
+// r5 norm process 
+ DFMA.RZ R4, R8, R10, R2  //  R4 = r5_rz = fma.rz: r4 * d3 + r3  
+ IADD3 R13, R15, 0x3f, RZ //   R13 = r5_exp_true + 0x3f
+ DFMA.RM R2, R8, R10, R2   //  R2= r5_rd = fma.rd: r4 * d3 + r3
+ LOP3.LUT R12, R5, 0xfffff, RZ, 0xc0, !PT  // 恢复尾数中的中隐含的1  R12 *r5_rz_hi = *r5_rz_hi & 0x000fffff
+ SHF.L.U32 R5, R4, R13.reuse, RZ    // R5 *rz_lo = *rz_lo << (r5_exp_true + 0x3f), R4 =  r5_rz_lo=
+ LOP3.LUT R12, R12, 0x100000, RZ, 0xfc, !PT   // R12 = *r5_rz_hi = *r5_rz_hi | 0x00100000
+ ISETP.NE.U32.AND P0, PT, R5, RZ, PT  // P0 = *rz_lo ,r5_rz_mantissa_droped != 0
+ SHF.L.U64.HI R13, R4, R13, R12    //  r5_rz_mantissa_droped lh, r5_rz_lo << (r5_exp_true + 0x3f)
+ ISETP.NE.AND.EX P0, PT, R13, RZ, PT, P0 //  P0 = (drop_hi != 0) && (*rz_lo != 0)
+ DSETP.NE.OR P0, PT, R6, R2, P0  //  r5_ru !=  r5_rd || r5_rz_mantissa_droped != 0
+ IADD3 R3, -R15, 0x1, RZ   			// R3 = 1 - r5_exp_true
+ SHF.R.S64 R5, R4, R3.reuse, R12.reuse	//   R5 = *r5_lh >> (1 - r5_exp_true)
+ SHF.R.S32.HI R4, RZ, R3, R12
+ ISETP.EQ.AND P0, PT, R17, RZ, P0	// P0 =  (x5_sign == 0) && (r5_ru !=  r5_rd || r5_rz_mantissa_droped != 0)
+ SEL R2, RZ, 0x1, !P0 			// R2 = P0 == true ? 1 : 0
+ IMAD.MOV R3, RZ, RZ, -R2		// R3 = P0 true?  -1 , 0 
+ IADD3 R2, P1, R5, 0x1, RZ	// R2 = *r5_lo + 1  if (P1 = x5_sign == 0)
+ ISETP.GE.AND P0, PT, R3, RZ, PT // P0 = R3 >= 0, 142 行条件不成立时P0 = true
+ IMAD.X R3, RZ, RZ, R4, P1    // R3 = R4 + 1 if P1
+ SEL R12, R5, R2, P0	// 
+ SEL R4, R4, R3, P0
+.L_x_6: // -------------------------------------------------------
+ LOP3.LUT R5, R4, R17, RZ, 0xfc, !PT  // sign R5 = R4 | R17
+ IMAD.MOV.U32 R4, RZ, RZ, R12
+.L_x_5: // -------------------------------------------------------
+ IMAD.MOV.U32 R2, RZ, RZ, R4
+ IMAD.MOV.U32 R3, RZ, RZ, R5
+.L_x_1: // -------------------------------------------------------
+ IMAD.MOV.U32 R4, RZ, RZ, R2
+ IMAD.MOV.U32 R5, RZ, RZ, R3
+ IMAD.MOV.U32 R2, RZ, RZ, R0
+ IMAD.MOV.U32 R3, RZ, RZ, 0x0
+ RET.REL.NODEC R2 `(div(double &, double, double))
+.L_x_7: // -------------------------------------------------------
+ BRA `(.L_x_7)
+ NOP
+ NOP
+ NOP
+ NOP
+ NOP
+ NOP
+.L_x_8:

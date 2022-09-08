@@ -1,0 +1,128 @@
+square(double *, double, double):
+ IMAD.MOV.U32 R1, RZ, RZ, c[0x0][0x28] 
+ MUFU.RCP64H R3, c[0x0][0x174] 
+ IMAD.MOV.U32 R6, RZ, RZ, c[0x0][0x170] 
+ IMAD.MOV.U32 R7, RZ, RZ, c[0x0][0x174] 
+ IMAD.MOV.U32 R2, RZ, RZ, 0x1 
+ DFMA R4, R2, -R6, 1 
+ DFMA R4, R4, R4, R4 
+ DFMA R4, R2, R4, R2 
+ DMUL R2, R4, c[0x0][0x168] 
+ DFMA R6, R2, -R6, c[0x0][0x168] 
+ DFMA R2, R4, R6, R2 
+ IMAD.MOV.U32 R4, RZ, RZ, c[0x0][0x16c] 
+ FSETP.GTU.AND P1, PT, |R4|, 6.4490557925156731238e-37, PT 
+ FFMA R0, RZ, c[0x0][0x174], R3 
+ FSETP.GT.AND P0, PT, |R0|, 4.8978884574313168671e-40, PT 
+ @P0 BRA P1, `(.L_x_0) 
+ MOV R0, 0x120 
+ CALL.REL.NOINC `($square(double *, double, double)$__cuda_sm20_div_f64_slowpath_v2) 
+ IMAD.MOV.U32 R2, RZ, RZ, R4 
+ IMAD.MOV.U32 R3, RZ, RZ, R5 
+.L_x_0:
+ ULDC.64 UR4, c[0x0][0x160] 
+ STG.E.64.SYS [UR4], R2 
+ EXIT 
+$square(double *, double, double)$__cuda_sm20_div_f64_slowpath_v2:
+ IMAD.MOV.U32 R2, RZ, RZ, 0x40000000 
+ IMAD.MOV.U32 R13, RZ, RZ, 0x5ff00000 
+ IMAD.MOV.U32 R8, RZ, RZ, 0x1 
+ LOP3.LUT R2, R2, c[0x0][0x174], RZ, 0xc0, !PT 
+ IMAD.MOV.U32 R14, RZ, RZ, c[0x0][0x16c] 
+ ISETP.GE.U32.AND P0, PT, R2, 0x40000000, PT 
+ IMAD.MOV.U32 R2, RZ, RZ, RZ 
+ LOP3.LUT R12, R14, 0x7f800000, RZ, 0xc0, !PT 
+ SEL R3, R13, 0x1ff00000, !P0 
+ ISETP.GE.U32.AND P0, PT, R12, 0x3e800000, PT 
+ DMUL R6, R2, c[0x0][0x170] 
+ MUFU.RCP64H R9, R7 
+ DFMA R4, -R6, R8, 1 
+ DFMA R10, R4, R4, R4 
+ SEL R5, R13, 0x1ff00000, !P0 
+ IMAD.MOV.U32 R4, RZ, RZ, RZ 
+ DFMA R10, R8, R10, R8 
+ DMUL R4, R4, c[0x0][0x168] 
+ DMUL R8, R4, R10 
+ DFMA R4, -R6, R8, R4 
+ DFMA R4, R10, R4, R8 
+ DSETP.GT.AND P0, PT, |R4|, RZ, PT 
+ @!P0 BRA `(.L_x_1) 
+ ISETP.GT.U32.AND P0, PT, R12, 0x3e7fffff, PT 
+ IMAD.MOV.U32 R6, RZ, RZ, RZ 
+ DMUL R8, R2, R4 
+ SEL R7, R13, 0x1ff00000, P0 
+ DMUL R4, R4, R6 
+ DMUL R8, R6, R8 
+ IMAD.MOV.U32 R6, RZ, RZ, c[0x0][0x170] 
+ DMUL R2, R2, R4 
+ IMAD.MOV.U32 R7, RZ, RZ, c[0x0][0x174] 
+ DFMA R4, R8, R6, -c[0x0][0x168] 
+ DFMA R6, R2, R6, -c[0x0][0x168] 
+ DSETP.GT.AND P0, PT, |R4|, |R6|, PT 
+ FSEL R5, R3, R9, P0 
+ FSEL R2, R2, R8, P0 
+ FSETP.GTU.AND P1, PT, |R5|, 1.469367938527859385e-39, PT 
+ MOV R3, R5 
+ @P1 BRA `(.L_x_2) 
+ IMAD.MOV.U32 R6, RZ, RZ, 0x58500000 
+ FSETP.GEU.AND P0, PT, |R14|, 1.5046327690525280102e-36, PT 
+ IMAD.MOV.U32 R3, RZ, RZ, R5 
+ LOP3.LUT R4, R2, 0x1, RZ, 0xfc, !PT 
+ SEL R7, R6, 0x3ff00000, !P0 
+ IMAD.MOV.U32 R6, RZ, RZ, RZ 
+ LOP3.LUT R2, R2, 0xfffffffe, RZ, 0xc0, !PT 
+ DMUL R8, R6, c[0x0][0x170] 
+ DMUL R6, R6, c[0x0][0x168] 
+ DFMA R12, R4, R8, -R6 
+ DFMA R10, R2, R8, -R6 
+ DSETP.GT.AND P0, PT, |R10|, |R12|, PT 
+ FSEL R13, R4, R2, P0 
+ IADD3 R10, P1, R13.reuse, 0x1, RZ 
+ LOP3.LUT R2, R13.reuse, 0x1, RZ, 0xc0, !PT 
+ IADD3 R4, P2, R13, -0x1, RZ 
+ IMAD.X R11, RZ, RZ, R5, P1 
+ ISETP.NE.U32.AND P0, PT, R2, 0x1, PT 
+ IADD3.X R3, R5, -0x1, RZ, P2, !PT 
+ FSEL R10, R13, R10, P0 
+ FSEL R11, R5, R11, P0 
+ FSEL R4, R4, R13, P0 
+ FSEL R5, R3, R5, P0 
+ DFMA R2, R8, R10, -R6 
+ DFMA R6, R8, R4, -R6 
+ DSETP.GT.AND P0, PT, |R2|, |R6|, PT 
+ FSEL R2, R4, R10, P0 
+ FSEL R3, R5, R11, P0 
+ BRA `(.L_x_2) 
+.L_x_1:
+ DSETP.NEU.AND P0, PT, R4, RZ, PT 
+ @!P0 BRA `(.L_x_3) 
+ MUFU.RCP64H R3, c[0x0][0x174] 
+ IMAD.MOV.U32 R2, RZ, RZ, RZ 
+ DSETP.GT.AND P1, PT, |R2|, RZ, PT 
+ @!P1 IMAD.MOV.U32 R4, RZ, RZ, c[0x0][0x170] 
+ @!P1 IMAD.MOV.U32 R5, RZ, RZ, c[0x0][0x174] 
+ @!P1 DSETP.NEU.AND P0, PT, |R4|, +INF , PT 
+ @!P1 FSEL R4, R2, c[0x0][0x170], !P0 
+ @!P1 FSEL R5, R3, c[0x0][0x174], !P0 
+ @!P1 IMAD.MOV.U32 R2, RZ, RZ, R4 
+ @!P1 MOV R3, R5 
+ DMUL R2, R2, c[0x0][0x168] 
+ BRA `(.L_x_2) 
+.L_x_3:
+ IMAD.MOV.U32 R2, RZ, RZ, c[0x0][0x170] 
+ IMAD.MOV.U32 R3, RZ, RZ, c[0x0][0x174] 
+ DMUL R2, R2, c[0x0][0x168] 
+.L_x_2:
+ IMAD.MOV.U32 R4, RZ, RZ, R2 
+ IMAD.MOV.U32 R5, RZ, RZ, R3 
+ IMAD.MOV.U32 R2, RZ, RZ, R0 
+ IMAD.MOV.U32 R3, RZ, RZ, 0x0 
+ RET.REL.NODEC R2 `(square(double *, double, double)) 
+.L_x_4:
+ BRA `(.L_x_4)
+ NOP
+ NOP
+ NOP
+ NOP
+ NOP
+.L_x_5:
