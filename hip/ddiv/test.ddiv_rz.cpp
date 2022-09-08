@@ -225,10 +225,7 @@ int main(int argc, char *argv[]) {
       fscanf(fp_random, "%lx %lx", (uint64_t *)&input_x[i], (uint64_t *)&input_y[i]);
       //printf("%lx %lx\n", *(uint64_t *)&input_x[i], *(uint64_t *)&input_y[i]);
     }
-    // input[0] = -0x0.0248f0000491cp-1022;
-    //  input[0] = 0x1.947c0ffd28f8p+1023;
-    // input[0] = 0x0.98e1600131c2cp-1022;
-    //*(uint64_t *)&input[0] = 0xfff8000000000000;
+
     hipMemcpy(inputBuffer_x, input_x, (batchlength) * sizeof(double),
               hipMemcpyHostToDevice);
     hipMemcpy(inputBuffer_y, input_y, (batchlength) * sizeof(double),

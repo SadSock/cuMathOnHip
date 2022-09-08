@@ -41,7 +41,7 @@ __device__ double ___ddiv_rd(double y, double x)
     uint32_t y0_exp_true = y0_exp_bias - 0x3ff;
     int32_t y0_exp_scale = 0;
 
-    uint32_t exp_diff = y0_exp_bias - x0_exp_bias;
+    int32_t exp_diff = y0_exp_bias - x0_exp_bias;
 
     // process abnormal
     bool x0_abnorm = (x0_exp_bias - 1) > 0x7fd;
@@ -172,7 +172,7 @@ __device__ double ___ddiv_rd(double y, double x)
             : "=v"(r5_rz)
             : "s"(rounding_mode), "v"(r4), "v"(d3), "v"(r3));
 
-        uint64_t r5_rz_temp = *(uint64_t*)&r5_rz; // copy r5_rz hex val
+        uint64_t r5_rz_temp = *(uint64_t*)&r5_rz;
         uint32_t* r5_rz_lo = (uint32_t*)&r5_rz_temp + 0;
         uint32_t* r5_rz_hi = (uint32_t*)&r5_rz_temp + 1;
 
@@ -207,7 +207,6 @@ __device__ double ___ddiv_rd(double y, double x)
                 fixup = 0;
             }
         }
-
         *r5_lh = r5_rz_temp;
 
         // 计算结果的mantisa
@@ -270,6 +269,7 @@ int main(int argc, char *argv[]) {
       fscanf(fp_random, "%lx %lx", (uint64_t *)&input_x[i], (uint64_t *)&input_y[i]);
       //printf("%lx %lx\n", *(uint64_t *)&input_x[i], *(uint64_t *)&input_y[i]);
     }
+
     hipMemcpy(inputBuffer_x, input_x, (batchlength) * sizeof(double),
               hipMemcpyHostToDevice);
     hipMemcpy(inputBuffer_y, input_y, (batchlength) * sizeof(double),

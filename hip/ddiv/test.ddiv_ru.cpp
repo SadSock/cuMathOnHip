@@ -12,7 +12,7 @@ using namespace std;
 
 static constexpr uint64_t neg_nan_hex = 0xfff8000000000000;
 #define neg_nan (*((double*)(&neg_nan_hex)));
-
+#define iszero(a) (a == 0.0)
 #define rounding_mode_ru (0x4)
 #define rounding_mode_rz (0xc)
 #define rounding_mode_rd (0x8)
@@ -137,6 +137,7 @@ __device__ double ___ddiv_ru(double y, double x)
     if (r5_abnorm) {
         uint32_t r5_sign = (*r5_hi) & 0x80000000;
         int32_t r5_exp_s = r5_exp_true - 0x3ff;
+
         double ret;
         if (r5_exp_s > 0x3ff) { // inf
 
