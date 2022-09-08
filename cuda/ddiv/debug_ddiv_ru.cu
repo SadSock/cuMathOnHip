@@ -13,10 +13,9 @@ __global__ void ddiv(double *out, double *x1, double *x2)
 
 int main()
 {
-
-  // time_t c_start, c_end;
   size_t griddim = 1024;
   size_t blockdim = 1024;
+  size_t batch = 100;
   size_t batchlength = griddim * blockdim;
   double *output = (double *)malloc(batchlength * sizeof(double));
   double *input_x = (double *)malloc(batchlength * sizeof(double));
@@ -36,30 +35,24 @@ int main()
   FILE *fp_random = fopen("../../float.random.txt", "r");
   FILE *fp_ret = fopen("../../cuda__ddiv_ru.txt", "w");
 
-  for (int i = 0; i < batchlength; i++)
+  for (int j = 0; j < batch; j++)
   {
-    fscanf(fp_random, "%lx %lx", (uint64_t *)&input_x[i], (uint64_t *)&input_y[i]);
+    for (int i = 0; i < batchlength; i++)
+    {
+      fscanf(fp_random, "%lx %lx", (uint64_t *)&input_x[i], (uint64_t *)&input_y[i]);
+    }
+
+    cudaMemcpy(inputBuffer_x, input_x, (batchlength) * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(inputBuffer_y, input_y, (batchlength) * sizeof(double), cudaMemcpyHostToDevice);
+    ddiv<<<griddim, blockdim>>>(outputBuffer, inputBuffer_x, inputBuffer_y);
+    cudaMemcpy(output, outputBuffer, (batchlength) * sizeof(double), cudaMemcpyDeviceToHost);
+
+    cudaDeviceSynchronize();
+    for (int i = 0; i < batchlength; i++)
+    {
+      fprintf(fp_ret, "%lx\n", *(uint64_t *)&output[i]);
+    }
   }
-
-  cudaMemcpy(inputBuffer_x, input_x, (batchlength) * sizeof(double),
-             cudaMemcpyHostToDevice);
-  cudaMemcpy(inputBuffer_y, input_y, (batchlength) * sizeof(double),
-             cudaMemcpyHostToDevice);
-  // c_start = clock(); //!< 单位为ms
-  ddiv<<<griddim, blockdim>>>(outputBuffer, inputBuffer_x, inputBuffer_y);
-  // c_end = clock();
-  cudaMemcpy(output, outputBuffer, (batchlength) * sizeof(double),
-             cudaMemcpyDeviceToHost);
-
-  for (int i = 0; i < batchlength; i++)
-  {
-    // fprintf(fp_ret, "%f, %la, %lx\n", output[i], output[i], *(uint64_t *)&output[i]);
-    fprintf(fp_ret, "%lx\n", *(uint64_t *)&output[i]);
-  }
-
-  // printf("The pause used %f ms by clock()\n", difftime(c_end, c_start));
-
-  cudaDeviceSynchronize();
 
   // Cleanup after kernel execution
   fclose(fp_random);

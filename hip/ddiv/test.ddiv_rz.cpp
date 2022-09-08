@@ -41,7 +41,7 @@ __device__ double ___ddiv_rz(double y, double x)
     uint32_t y0_exp_true = y0_exp_bias - 0x3ff;
     int32_t y0_exp_scale = 0;
 
-    uint32_t exp_diff = y0_exp_bias - x0_exp_bias;
+    int32_t exp_diff = y0_exp_bias - x0_exp_bias;
 
     // process abnormal
     bool x0_abnorm = (x0_exp_bias - 1) > 0x7fd;
@@ -194,12 +194,12 @@ int main(int argc, char *argv[]) {
   hipEvent_t gpuStart, gpuEnd, gpuSharedMemStart, gpuSharedMemEnd;
   hipDeviceProp_t devProp;
   hipGetDeviceProperties(&devProp, 0);
-  // time_t c_start, c_end;
+
   /* Initial input,output for the host and create memory objects for the
    * kernel*/
   size_t griddim = 1024;
   size_t blockdim = 1024;
-  size_t batch = 1;
+  size_t batch = 10;
   size_t batchlength = griddim * blockdim;
   double *output = (double *)malloc(batchlength * sizeof(double));
   double *input_x = (double *)malloc(batchlength * sizeof(double));
@@ -223,7 +223,6 @@ int main(int argc, char *argv[]) {
   for (int j = 0; j < batch; j++) {
     for (int i = 0; i < batchlength; i++) {
       fscanf(fp_random, "%lx %lx", (uint64_t *)&input_x[i], (uint64_t *)&input_y[i]);
-      //printf("%lx %lx\n", *(uint64_t *)&input_x[i], *(uint64_t *)&input_y[i]);
     }
 
     hipMemcpy(inputBuffer_x, input_x, (batchlength) * sizeof(double),
@@ -238,15 +237,12 @@ int main(int argc, char *argv[]) {
     hipEventSynchronize(gpuEnd);
     hipEventElapsedTime(&tGpu, gpuStart, gpuEnd);
     printf(" %d GPU RUN TIME : %f us\n", j, tGpu * 1000);
-    // std::cout << "GPU RUN TIME : " << tGpu * 1000 << " us" << std::endl;
-    hipMemcpy(output, outputBuffer, (batchlength) * sizeof(double),
-              hipMemcpyDeviceToHost);
+
+    hipMemcpy(output, outputBuffer, (batchlength) * sizeof(double), hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
-    // printf("The pause used %f ms by clock()\n",difftime(c_end,c_start));
+
     for (int i = 0; i < batchlength; i++) {
       fprintf(fp_ret, "%lx\n", *(uint64_t *)&output[i]);
-      // printf("%la, %lx\n", output[i], *(uint64_t *)&output[i]);
-      // fprintf(fp_ret, "%la, %lx\n", output[i], *(uint64_t *)&output[i]);
     }
   }
   fclose(fp_random);
