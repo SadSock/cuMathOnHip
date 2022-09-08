@@ -200,11 +200,7 @@ __device__ double ___ddiv_rd(double y, double x)
 				fixup = 1;
 			}
 		}
-		else {
-			if (r5_rz_mantissa_dropped != 0) {
-				fixup = 0;
-			}
-		}
+
 		*r5_lh = r5_rz_temp;
 
 		// 计算结果的mantisa

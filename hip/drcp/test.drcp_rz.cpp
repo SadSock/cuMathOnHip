@@ -41,8 +41,8 @@ __device__ double __drcp_rz(double x) {
     }
     if (x0 == 0.0) {
       *x0_hi = *x0_hi & 0x80000000; // inf
-      *x0_hi = *x0_hi ^ 0x7fefffff;
-      *x0_lo =          0xffffffff;
+      *x0_hi = *x0_hi ^ 0x7ff00000;
+      *x0_lo =          0;
       return x0;
     }
 
