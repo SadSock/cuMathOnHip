@@ -53,8 +53,8 @@ int main()
 
   for (int i = 0; i < batchlength; i++)
   {
-    fprintf(fp_ret, "%f, %la, %lx\n", output[i], output[i],
-            *(uint64_t *)&output[i]);
+    // fprintf(fp_ret, "%f, %la, %lx\n", output[i], output[i], *(uint64_t *)&output[i]);
+    fprintf(fp_ret, "%lx\n", *(uint64_t *)&output[i]);
   }
 
   // printf("The pause used %f ms by clock()\n", difftime(c_end, c_start));
