@@ -17,7 +17,7 @@ static constexpr uint64_t neg_nan_hex = 0xfff8000000000000;
 #define rounding_mode_rz (0xc)
 #define rounding_mode_rd (0x8)
 
-double ddiv_rz(double y, double x)
+__device__ double ___ddiv_rz(double y, double x)
 {
     uint32_t rounding_mode = 0;
     uint32_t rounding_mode_backup = 0;
@@ -119,7 +119,7 @@ double ddiv_rz(double y, double x)
     double d3 = __builtin_fma(-x0, r3, y0);
 
     double r5_rz = 0.0;
-    rouding_mode = rounding_mode_rz;
+    rounding_mode = rounding_mode_rz;
     asm volatile(
         "s_setreg_b32 hwreg(HW_REG_MODE, 0, 4), %1\n\t"
         "v_fma_f64 %0, %2, %3, %4 "
@@ -184,7 +184,7 @@ double ddiv_rz(double y, double x)
 
 __global__ void test_ddiv(double *out, double *x, double *y) {
   int idx = hipThreadIdx_x + hipBlockDim_x * hipBlockIdx_x;
-  double ret = ___ddiv_ru(x[idx], y[idx]);
+  double ret = ___ddiv_rz(x[idx], y[idx]);
   out[idx] = ret;
 }
 
