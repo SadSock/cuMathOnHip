@@ -243,7 +243,7 @@ int main(int argc, char *argv[]) {
    * kernel*/
   size_t griddim = 1024;
   size_t blockdim = 1024;
-  size_t batch = 10;
+  size_t batch = 100;
   size_t batchlength = griddim * blockdim;
   double *output = (double *)malloc(batchlength * sizeof(double));
   double *input_x = (double *)malloc(batchlength * sizeof(double));
