@@ -102,21 +102,21 @@ double ddiv_rz(double y, double x)
     *y0_hi = *y0_hi - (y0_exp_true << 20);
 
     float x0_f32 = (float)x0;
-    float r0_f32 = __buildin_amdgcn_rcpf(x0_f32);
+    float r0_f32 = __builtin_amdgcn_rcpf(x0_f32);
     double r0 = (double)r0_f32;
 
-    double d1 = __buildin_fma(-x0, r0, 1.0);
-    double r1 = __buildin_fma(r0, d1, r0);
+    double d1 = __builtin_fma(-x0, r0, 1.0);
+    double r1 = __builtin_fma(r0, d1, r0);
     double dd1 = d1 * d1;
 
-    double r2 = __buildin_fma(r1, dd1, r1);
+    double r2 = __builtin_fma(r1, dd1, r1);
     double s1 = r0 * y0;
-    double s2 = __buildin_fma(-x0, s1, y0);
+    double s2 = __builtin_fma(-x0, s1, y0);
 
-    double d2 = __buildin_fma(-x0, r2, 1.0);
-    double r4 = __buildin_fma(r2, d2, r2);
-    double r3 = __buildin_fma(r2, s2, s1);
-    double d3 = __buildin_fma(-x0, r3, y0);
+    double d2 = __builtin_fma(-x0, r2, 1.0);
+    double r4 = __builtin_fma(r2, d2, r2);
+    double r3 = __builtin_fma(r2, s2, s1);
+    double d3 = __builtin_fma(-x0, r3, y0);
 
     double r5_rz = 0.0;
     rouding_mode = rounding_mode_rz;
