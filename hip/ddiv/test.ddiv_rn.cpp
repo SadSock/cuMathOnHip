@@ -10,7 +10,7 @@
 //#include <hip/rocrand.h>
 using namespace std;
 
-__attribute__((noinline)) __device__ double slow_drcp_rn(double x) {
+__attribute__((noinline)) __device__ double slow_ddiv_rn(double y, double x) {
 
 	double r0 = 0.0;
 	double ret = x;
@@ -92,18 +92,18 @@ __attribute__((noinline)) __device__ double slow_drcp_rn(double x) {
 	return 0.0;
 }
 
-__device__ double ___ddiv_rn(double x, double y) {
+__device__ double ___ddiv_rn(double y, double x) {
 
-	double r0 = 0.0;
-	double ret = x;
-	double x0 = x;
-	double y0 = y;
-	uint32_t* x0_hi = (uint32_t*)&x0 + 1;
-	uint32_t* x0_lo = (uint32_t*)&x0;
-	uint32_t* y0_hi = (uint32_t*)&y0 + 1;
-	uint32_t* y0_lo = (uint32_t*)&y0;
-	uint32_t* r0_hi = (uint32_t*)&r0 + 1;
-	uint32_t* r0_lo = (uint32_t*)&r0;
+  double r0 = 0.0;
+  double ret = x;
+  double y0 = y;
+  double x0 = x;
+  uint32_t *y0_hi = (uint32_t *)&y0 + 1;
+  uint32_t *y0_lo = (uint32_t *)&y0;
+  uint32_t *x0_hi = (uint32_t *)&x0 + 1;
+  uint32_t *x0_lo = (uint32_t *)&x0;
+  uint32_t *r0_hi = (uint32_t *)&r0 + 1;
+  uint32_t *r0_lo = (uint32_t *)&r0;
 
 	// double x0_mantissa = __builtin_amdgcn_frexp_mant(x0);
 	// int32_t x0_exp = __builtin_amdgcn_frexp_exp(x0);
@@ -115,21 +115,29 @@ __device__ double ___ddiv_rn(double x, double y) {
 	r0 = __builtin_amdgcn_rcp(x0);
 	*r0_lo = 0x1;
 
-	if (!(abs(*(float*)r0_lo) < (float)5.878909486335835e-39)) {
+  //if (!(abs(*(float *)r0_lo) < (float)5.878909486335835e-39)) {
 
-		// iteration
-		double d1 = __builtin_fma(r0, -y0, 1.0);
-		double dd1 = __builtin_fma(d1, d1, d1);
-		double r1 = __builtin_fma(r0, dd1, r0);
-		double d2 = __builtin_fma(r1, -y0, 1.0);
-		double r2 = __builtin_fma(r1, d2, r1);
-		double q1 = r2 * x0;
-		double d3 = __builtin_fma(q1, -y0, x0);
-		double q2 = __builtin_fma(r2, d3, q1);
-		return q2;
-	}
-	return 0.0;
-	//return slow_drcp_rn(x);
+  // iteration
+  double d1  = __builtin_fma(r0, -x0, 1.0);
+  double dd1 = __builtin_fma(d1, d1, d1);
+  double r1  = __builtin_fma(r0, dd1, r0);
+  double d2  = __builtin_fma(r1, -x0, 1.0);
+  double r2  = __builtin_fma(r1, d2, r1);
+  double q1  = r2 * y0;
+  double d3  = __builtin_fma(q1, -x0, y0);
+  double q2  = __builtin_fma(r2,  d3, q1);
+
+
+  uint32_t *q2_hi = (uint32_t *)&q2 + 1;
+  uint32_t *q2_lo = (uint32_t *)&q2;
+
+  uint32_t toosmall = 0x00055555;
+  if( *(float *)q2_hi > *(float *)&toosmall){
+    return q2;
+  }
+  //}
+  //return 0.0;
+  return slow_drcp_rn(x);
 }
 
 __global__ void test_ddiv(double* out, double* x, double* y) {
