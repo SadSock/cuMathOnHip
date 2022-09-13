@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <hip/hip_runtime.h>
@@ -11,84 +12,172 @@
 using namespace std;
 
 __attribute__((noinline)) __device__ double slow_ddiv_rn(double y, double x) {
-
-	double r0 = 0.0;
 	double ret = x;
-	double x0 = x;
+	double x0  = x;
+	double y0  = y;
+	double r0  = 0.0;
 
+	uint32_t* y0_hi = (uint32_t*)&y0 + 1;
+	uint32_t* y0_lo = (uint32_t*)&y0;
 	uint32_t* x0_hi = (uint32_t*)&x0 + 1;
 	uint32_t* x0_lo = (uint32_t*)&x0;
 	uint32_t* r0_hi = (uint32_t*)&r0 + 1;
 	uint32_t* r0_lo = (uint32_t*)&r0;
 
 	// return 1.0/x;
-	if (isnan(x0)) { // nan
-		*x0_hi = *x0_hi | 0x80000;
-		return x0;
-	}
+	//if (isnan(x0)) { // nan
+	//	*x0_hi = *x0_hi | 0x80000;
+	//	return x0;
+	//}
 
-	uint32_t x0_hi_no_sign = *x0_hi & 0x7fffffff;
+	//uint32_t x0_hi_no_sign = *x0_hi & 0x7fffffff;
 
-	if (((uint32_t)(x0_hi_no_sign - 0x1) >= 0x7fefffff)) { // inf denormal
-		*x0_hi ^= 0x7ff00000;
-		*x0_lo = 0x0;
-		return x0;
-	}
+	//if (((uint32_t)(x0_hi_no_sign - 0x1) >= 0x7fefffff)) { // inf denormal
+	//	*x0_hi ^= 0x7ff00000;
+	//	*x0_lo = 0x0;
+	//	return x0;
+	//}
 
-	double fixup;
-	uint32_t* fixup_lo = (uint32_t*)&fixup + 0;
-	uint32_t* fixup_hi = (uint32_t*)&fixup + 1;
-	*fixup_hi = 0x0;
+	double scale_x;
+	double scale_y;
+  double scale_q; 
+	uint32_t* scale_x_lo = (uint32_t*)&scale_x + 0;
+	uint32_t* scale_x_hi = (uint32_t*)&scale_x + 1;
+	uint32_t* scale_y_lo = (uint32_t*)&scale_y + 0;
+	uint32_t* scale_y_hi = (uint32_t*)&scale_y + 1;
+	uint32_t* scale_q_lo = (uint32_t*)&scale_q + 0;
+	uint32_t* scale_q_hi = (uint32_t*)&scale_q + 1;
 
-	if (x0_hi_no_sign >= 0x1000001) {
+  if( (*x0_hi & 0x40000000) >= 0x40000000 ){
+    *scale_x_hi = 0x1ff00000;// 2^-52
+  }else {
+    *scale_x_hi = 0x5ff00000;// 2^52
+  }
+  *scale_x_lo = 0x0;
+  if( (*y0_hi & 0x7f800000) >= 0x3e800000 ){
+    *scale_y_hi = 0x1ff00000;
+  }else{
+    *scale_y_hi = 0x5ff00000;
+  }
+  *scale_y_lo = 0x0;
 
-		uint32_t r0_lo_tmp = (*x0_hi | 0x7fffffff) - 0x100000;
-		*x0_hi = *x0_hi - 0x3fe00000;
-		r0 = __builtin_amdgcn_rcp(x0);
-		*r0_lo = r0_lo_tmp;
-		*fixup_hi = 0x00100000;
-		//*(uint64_t*)&fixup = 0x0010000006067828;
-		//*(uint64_t*)&fixup = 0x0010000000000000;
+  if( (*y0_hi & 0x7f800000) >= 0x3e800000 ){
+    *scale_q_hi = 0x5ff00000; // 2^512
+  }else{
+    *scale_q_hi = 0x1ff00000; // 2^(-512)
+  }
+  *scale_q_lo = 0x0;
 
-		// double d1  = -x0 * r0 + 1.0
-		// double dd1 = d1 * d1 + d1
-		// double r1  = r0 * dd1 + r0
-		// double d2  = -x0 * r1 + 1.0
-		// double r2  = r1 * d2 + r1
-		// double r3 = r2 * (double)0x0010000006067828
-		// double d3  = r3 * -x + 1.0;
-		// double dd3 = d3 * d3 + d3
-		// double r4  = r3 * dd3 + r3
+  double x1 = x0 * scale_x;
+  double y1 = y0 * scale_y;
+  r0 = __builtin_amdgcn_rcp(x1);
+  *r0_lo = 0x1;
 
-		double d1 = __builtin_fma(r0, -x0, 1.0);
-		double dd1 = __builtin_fma(d1, d1, d1);
-		double r1 = __builtin_fma(r0, dd1, r0);
-		double d2 = __builtin_fma(-x0, r1, 1.0);
-		double r2 = __builtin_fma(r1, d2, r1);
-		double r3 = r2 * fixup;
-		double d3 = __builtin_fma(r3, -x, 1.0);
-		double dd3 = __builtin_fma(d3, d3, d3);
-		double r4 = __builtin_fma(r3, dd3, r3);
-		return r4;
-	}
-	else {
-		*fixup_hi = 0x46900000;
-		//*(uint64_t*)&fixup = 0x4690000000000000;// 2^106
-		uint32_t r0_lo_tmp = (*x0_hi | 0x7fffffff) - 0x100000;
+  double d1  = __builtin_fma(-x1, r0, 1.0);
+  double dd1 = __builtin_fma(d1, d1, d1);
+  double r1  = __builtin_fma(r0, dd1, r0);
+  double d2  = __builtin_fma(-x1, r1, 1.0);
+  double r2  = __builtin_fma(r1, d2, r1);
+  double q1  = y1 * r2;
+  double d3  = __builtin_fma(-x1, q1, y1);
+  double q2  = __builtin_fma( r2, d3, q1);
+  
+  if( abs(q2) > 0.0){
+    double q3_1 = q2 * scale_x * scale_q;
+    double q3_2 = q2 * scale_q * scale_x;
 
-		x0 = x0 * fixup;
-		r0 = __builtin_amdgcn_rcp(x0);
-		*r0_lo = r0_lo_tmp;
+    double dq1 = __builtin_fma(q3_1, x0, y0);
+    double dq2 = __builtin_fma(q3_2, x0, y0);
 
-		double d1 = __builtin_fma(-x0, r0, 1.0);
-		double dd1 = __builtin_fma(d1, d1, d1);
-		double r1 = __builtin_fma(r0, dd1, r0);
-		double d2 = __builtin_fma(-x0, r1, 1.0);
-		double r2 = __builtin_fma(r1, d2, r1);
+    double q4;
+    uint32_t* q4_lo = (uint32_t*)&q4 + 0;
+    uint32_t* q4_hi = (uint32_t*)&q4 + 1;
+    if (fabs(dq1) > fabs(dq2)) {
+      q4 = q3_2;
+    }else{
+      q4 = q3_1;
+    }
+    uint32_t twon126 = 0x00100000;
+    if( !(fabs(*(float*)q4_hi) <= *(float*)&twon126)){
+      return q4;
+    }
+   
+    /////////////////////////////////
+    uint32_t twon119 = 0x04000000;
+    if( !( fabs(*(float *)y0_hi) < *(float*)&twon119)){
+      *scale_q_hi = 0x3ff00000;
+    }else{
+      *scale_q_hi = 0x58500000;
+    }
+    *scale_q_lo = 0x0;
+    
+    double q5_1 = q4; 
+    uint32_t* q5_1_lo = (uint32_t*)&q5_1 + 0;
+    uint32_t* q5_1_hi = (uint32_t*)&q5_1 + 1;
+    *q5_1_lo = *q5_1_lo | 0x1;
 
-		return r2 * fixup;
-	}
+    double q5_2 = q4; 
+    uint32_t* q5_2_lo = (uint32_t*)&q5_2 + 0;
+    uint32_t* q5_2_hi = (uint32_t*)&q5_2 + 1;
+    *q5_2_lo = *q5_2_lo & 0xfffffffe;
+    
+    //*q4_lo = *q4_lo & 0xfffffffe;
+    double x2 = x0 * scale_q;
+    double y2 = y0 * scale_q;
 
+    double dq2_1 = q5_1 * x2 - y2;
+    double dq2_2 = q5_2 * x2 - y2;
+
+    double q6; 
+    uint32_t* q6_lo = (uint32_t*)&q6 + 0;
+    uint32_t* q6_hi = (uint32_t*)&q6 + 1;
+    if(fabs(dq2_1) > fabs(dq2_2)){
+      q6 = q5_2;
+    }else{
+      q6 = q5_1;
+    }
+
+    uint32_t R10 = *q6_lo + 0x1;
+    //uint32_t R2  = *q6_lo & 0x1;
+    uint32_t R4  = *q6_lo - 0x1;
+    uint32_t R3  = *q4_hi - 0x1;
+
+    double q7_1; 
+    uint32_t* q7_1_lo = (uint32_t*)&q7_1 + 0;
+    uint32_t* q7_1_hi = (uint32_t*)&q7_1 + 1;
+    double q7_2; 
+    uint32_t* q7_2_lo = (uint32_t*)&q7_2 + 0;
+    uint32_t* q7_2_hi = (uint32_t*)&q7_2 + 1;
+    if((*q6_lo & 0x1) != 0x1){
+      //
+      *q7_1_lo = *q6_lo;
+      *q7_1_hi = *q6_hi;
+      //
+      *q7_2_lo = *q6_lo - 0x1;
+      *q7_2_hi = *q6_hi - 0x1;
+    }else {
+      *q7_1_lo = *q6_lo + 0x1;
+      *q7_1_hi = *q6_hi;
+      //
+      *q7_2_lo = *q6_lo;
+      *q7_2_hi = *q6_hi;
+    }
+
+    double dq3_1 = x2 * q7_1 - y2;
+    double dq3_2 = x2 * q7_2 - y2;
+    
+    double q8;
+    if (fabs(dq3_1) > fabs(dq3_2) ) {
+      q8 = q7_2;
+    }else{
+      q8 = q7_1;
+    }
+    return q8;
+  }else
+  {
+    ;
+  }
+	
 	return 0.0;
 }
 
@@ -137,7 +226,7 @@ __device__ double ___ddiv_rn(double y, double x) {
   }
   //}
   //return 0.0;
-  return slow_drcp_rn(x);
+  return slow_ddiv_rn(y, x);
 }
 
 __global__ void test_ddiv(double* out, double* x, double* y) {
