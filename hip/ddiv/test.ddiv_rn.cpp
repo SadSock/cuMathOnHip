@@ -24,29 +24,15 @@ __attribute__((noinline)) __device__ double slow_ddiv_rn(double y, double x) {
 	uint32_t* r0_hi = (uint32_t*)&r0 + 1;
 	uint32_t* r0_lo = (uint32_t*)&r0;
 
-	// return 1.0/x;
-	//if (isnan(x0)) { // nan
-	//	*x0_hi = *x0_hi | 0x80000;
-	//	return x0;
-	//}
-
-	//uint32_t x0_hi_no_sign = *x0_hi & 0x7fffffff;
-
-	//if (((uint32_t)(x0_hi_no_sign - 0x1) >= 0x7fefffff)) { // inf denormal
-	//	*x0_hi ^= 0x7ff00000;
-	//	*x0_lo = 0x0;
-	//	return x0;
-	//}
-
 	double scale_x;
 	double scale_y;
   double scale_q; 
-	uint32_t* scale_x_lo = (uint32_t*)&scale_x + 0;
-	uint32_t* scale_x_hi = (uint32_t*)&scale_x + 1;
-	uint32_t* scale_y_lo = (uint32_t*)&scale_y + 0;
-	uint32_t* scale_y_hi = (uint32_t*)&scale_y + 1;
-	uint32_t* scale_q_lo = (uint32_t*)&scale_q + 0;
-	uint32_t* scale_q_hi = (uint32_t*)&scale_q + 1;
+  uint32_t* scale_x_lo = (uint32_t*)&scale_x + 0;
+  uint32_t* scale_x_hi = (uint32_t*)&scale_x + 1;
+  uint32_t* scale_y_lo = (uint32_t*)&scale_y + 0;
+  uint32_t* scale_y_hi = (uint32_t*)&scale_y + 1;
+  uint32_t* scale_q_lo = (uint32_t*)&scale_q + 0;
+  uint32_t* scale_q_hi = (uint32_t*)&scale_q + 1;
 
   if( (*x0_hi & 0x40000000) >= 0x40000000 ){
     *scale_x_hi = 0x1ff00000;// 2^-52
@@ -86,13 +72,13 @@ __attribute__((noinline)) __device__ double slow_ddiv_rn(double y, double x) {
     double q3_1 = q2 * scale_x * scale_q;
     double q3_2 = q2 * scale_q * scale_x;
 
-    double dq1 = __builtin_fma(q3_1, x0, y0);
-    double dq2 = __builtin_fma(q3_2, x0, y0);
+    double dq3_1 = __builtin_fma(q3_1, x0, -y0);
+    double dq3_2 = __builtin_fma(q3_2, x0, -y0);
 
     double q4;
     uint32_t* q4_lo = (uint32_t*)&q4 + 0;
     uint32_t* q4_hi = (uint32_t*)&q4 + 1;
-    if (fabs(dq1) > fabs(dq2)) {
+    if (fabs(dq3_1) > fabs(dq3_2)) {
       q4 = q3_2;
     }else{
       q4 = q3_1;
@@ -103,8 +89,10 @@ __attribute__((noinline)) __device__ double slow_ddiv_rn(double y, double x) {
     }
    
     /////////////////////////////////
+    //input_y = 0x80c62b6b018c56d4;
+    //input_x = 0x6992e050d325c0a0;
     uint32_t twon119 = 0x04000000;
-    if( !( fabs(*(float *)y0_hi) < *(float*)&twon119)){
+    if(!( fabs(*(float *)y0_hi) < *(float*)&twon119)){
       *scale_q_hi = 0x3ff00000;
     }else{
       *scale_q_hi = 0x58500000;
@@ -121,64 +109,92 @@ __attribute__((noinline)) __device__ double slow_ddiv_rn(double y, double x) {
     uint32_t* q5_2_hi = (uint32_t*)&q5_2 + 1;
     *q5_2_lo = *q5_2_lo & 0xfffffffe;
     
-    //*q4_lo = *q4_lo & 0xfffffffe;
     double x2 = x0 * scale_q;
     double y2 = y0 * scale_q;
 
-    double dq2_1 = q5_1 * x2 - y2;
-    double dq2_2 = q5_2 * x2 - y2;
+    double dq2_1 = __builtin_fma(q5_1, x2, -y2);
+    double dq2_2 = __builtin_fma(q5_2, x2, -y2);
 
     double q6; 
     uint32_t* q6_lo = (uint32_t*)&q6 + 0;
     uint32_t* q6_hi = (uint32_t*)&q6 + 1;
-    if(fabs(dq2_1) > fabs(dq2_2)){
-      q6 = q5_2;
-    }else{
+    if(fabs(dq2_2) > fabs(dq2_1)){ // must be fabs(dq2_2) > fabs(dq2_1) 
       q6 = q5_1;
+    }else{
+      q6 = q5_2;
     }
 
-    uint32_t R10 = *q6_lo + 0x1;
-    //uint32_t R2  = *q6_lo & 0x1;
-    uint32_t R4  = *q6_lo - 0x1;
-    uint32_t R3  = *q4_hi - 0x1;
-
-    double q7_1; 
-    uint32_t* q7_1_lo = (uint32_t*)&q7_1 + 0;
-    uint32_t* q7_1_hi = (uint32_t*)&q7_1 + 1;
-    double q7_2; 
-    uint32_t* q7_2_lo = (uint32_t*)&q7_2 + 0;
-    uint32_t* q7_2_hi = (uint32_t*)&q7_2 + 1;
+    double q7_1 = q6; 
+    uint64_t* q7_1_lohi = (uint64_t*)&q7_1;
+    uint32_t* q7_1_lo   = (uint32_t*)&q7_1 + 0;
+    uint32_t* q7_1_hi   = (uint32_t*)&q7_1 + 1;
+    double q7_2 = q6; 
+    uint64_t* q7_2_lohi = (uint64_t*)&q7_2;
+    uint32_t* q7_2_lo   = (uint32_t*)&q7_2 + 0;
+    uint32_t* q7_2_hi   = (uint32_t*)&q7_2 + 1;
+    
     if((*q6_lo & 0x1) != 0x1){
-      //
-      *q7_1_lo = *q6_lo;
-      *q7_1_hi = *q6_hi;
-      //
-      *q7_2_lo = *q6_lo - 0x1;
-      *q7_2_hi = *q6_hi - 0x1;
+      *q7_2_lohi = *q7_2_lohi - 1;
     }else {
-      *q7_1_lo = *q6_lo + 0x1;
-      *q7_1_hi = *q6_hi;
-      //
-      *q7_2_lo = *q6_lo;
-      *q7_2_hi = *q6_hi;
+      *q7_1_lohi = *q7_1_lohi + 1; 
     }
 
-    double dq3_1 = x2 * q7_1 - y2;
-    double dq3_2 = x2 * q7_2 - y2;
+    double dq7_1 = __builtin_fma(q7_1, x2, -y2);
+    double dq7_2 = __builtin_fma(q7_2, x2, -y2);
     
     double q8;
-    if (fabs(dq3_1) > fabs(dq3_2) ) {
+    if (fabs(dq7_1) > fabs(dq7_2) ) {
       q8 = q7_2;
     }else{
       q8 = q7_1;
     }
+    //input_y = 0x80c62b6b018c56d4;
+    //input_x = 0x6992e050d325c0a0;
     return q8;
-  }else
-  {
-    ;
+  }else{
+    if(!(q2==0.0)){ // q2 = nan =>
+                    //          => x0 is nan or y0 is nan
+      //input_y = 0xb3d448cf67a8919c; 
+      //input_x = 0xfff30a71ffe614e0; 
+      double r0  = 0.0;
+      double x0  = x;
+      double y0  = y;
+      double q9  = 0.0;
+      uint64_t* r0_lohi = (uint64_t*)&r0;
+      uint32_t* r0_hi = (uint32_t*)&r0 + 1;
+      uint32_t* r0_lo = (uint32_t*)&r0;
+      uint32_t* x0_hi = (uint32_t*)&x0 + 1;
+      uint32_t* x0_lo = (uint32_t*)&x0;
+      uint32_t* y0_hi = (uint32_t*)&y0 + 1;
+      uint32_t* y0_lo = (uint32_t*)&y0;
+      r0 = __builtin_amdgcn_rcp(x0);
+      *r0_lo = 0;
+      if (!(fabs(r0)>0.0)) {
+        if(!isinf(fabs(x0))){//TODO: may have problem
+          // y0 is not nan
+          // x0 is nan
+          //input_y = 0xb3d448cf67a8919c; 
+          //input_x = 0xfff30a71ffe614e0; 
+          x0 = x0;
+        }else{// q2 is nan
+              // xo is inf ?
+          x0 = r0;
+        }
+        r0 = x0;
+      }
+      q9 = y0 * r0; 
+      //input_y = 0xb3d448cf67a8919c; 
+      //input_x = 0xfff30a71ffe614e0; 
+      
+      //input_y = 0xfff30a71ffe614e0; 
+      //input_x = 0xb3d448cf67a8919c; 
+      return q9;
+
+    }else{// q2 = 0.0
+      //return x0 * y0; // ret = 0.0
+      return 1.0; // ret = 0.0
+    }
   }
-	
-	return 0.0;
 }
 
 __device__ double ___ddiv_rn(double y, double x) {
@@ -204,8 +220,6 @@ __device__ double ___ddiv_rn(double y, double x) {
 	r0 = __builtin_amdgcn_rcp(x0);
 	*r0_lo = 0x1;
 
-  //if (!(abs(*(float *)r0_lo) < (float)5.878909486335835e-39)) {
-
   // iteration
   double d1  = __builtin_fma(r0, -x0, 1.0);
   double dd1 = __builtin_fma(d1, d1, d1);
@@ -221,11 +235,11 @@ __device__ double ___ddiv_rn(double y, double x) {
   uint32_t *q2_lo = (uint32_t *)&q2;
 
   uint32_t toosmall = 0x00055555;
-  if( *(float *)q2_hi > *(float *)&toosmall){
+  uint32_t two_neg_970 = 0x035b7333;
+  if( abs(*(float *)q2_hi) > *(float *)&toosmall &&
+    !(abs(*(float *)y0_hi) <= *(float *)& two_neg_970)){
     return q2;
   }
-  //}
-  //return 0.0;
   return slow_ddiv_rn(y, x);
 }
 
@@ -270,7 +284,7 @@ int main(int argc, char* argv[]) {
 	hipEventCreate(&gpuEnd);
 	for (int j = 0; j < batch; j++) {
 		for (int i = 0; i < batchlength; i++) {
-			fscanf(fp_random, "%lx %lx", (uint64_t*)&input_x[i], (uint64_t*)&input_y[i]);
+			fscanf(fp_random, "%lx %lx", (uint64_t*)&input_y[i], (uint64_t*)&input_x[i]);
 			//printf("%lx %lx\n", *(uint64_t *)&input_x[i], *(uint64_t *)&input_y[i]);
 		}
 		// input[0] = -0x0.0248f0000491cp-1022;
@@ -283,7 +297,7 @@ int main(int argc, char* argv[]) {
 			hipMemcpyHostToDevice);
 		hipEventRecord(gpuStart, 0);
 		hipLaunchKernelGGL(test_ddiv, dim3(griddim), dim3(blockdim), 0, 0,
-			outputBuffer, inputBuffer_x, inputBuffer_y);
+			outputBuffer, inputBuffer_y, inputBuffer_x);
 		hipEventRecord(gpuEnd, 0);
 		hipEventSynchronize(gpuStart);
 		hipEventSynchronize(gpuEnd);
