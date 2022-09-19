@@ -20,7 +20,7 @@ compile_size = 64bit
 	.headerflags    @"EF_CUDA_SM75 EF_CUDA_PTX_SM(EF_CUDA_SM75)"
                                    // R1 = 0  
         /*0000*/                   IMAD.MOV.U32 R1, RZ, RZ, c[0x0][0x28] ;                       /* 0x00000a00ff017624 */
-                                   // R3 = r0_hi  //0xbfe00000                                                            /* 0x000fc400078e00ff */
+                                   // R3 = r0_hi  //0xbfe00000                                   /* 0x000fc400078e00ff */
         /*0010*/                   MUFU.RCP64H R3, c[0x0][0x174] ;                               /* 0x00005d0000037b08 */
                                    // R6 = x0_lo                                                 /* 0x000e220000001800 */
         /*0020*/                   IMAD.MOV.U32 R6, RZ, RZ, c[0x0][0x170] ;                      /* 0x00005c00ff067624 */

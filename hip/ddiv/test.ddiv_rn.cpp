@@ -191,8 +191,13 @@ __attribute__((noinline)) __device__ double slow_ddiv_rn(double y, double x) {
       return q9;
 
     }else{// q2 = 0.0
-      //return x0 * y0; // ret = 0.0
-      return 1.0; // ret = 0.0
+      
+     // input_y = 0x0;                  
+     // input_x = 0xedada0dfdb5b41bc;   
+                                        
+     // input_y = 0x8000000000000000;   
+     // input_x = 0x7fefffffffffffff;   
+     return x * y; // return 0.0        
     }
   }
 }
@@ -259,8 +264,8 @@ int main(int argc, char* argv[]) {
 	/* Initial input,output for the host and create memory objects for the
 	 * kernel*/
 	size_t griddim = 1024;
-	size_t blockdim = 1024;
-	size_t batch = 1;
+	size_t blockdim = 102400;
+	size_t batch = 10;
 	size_t batchlength = griddim * blockdim;
 	double* output = (double*)malloc(batchlength * sizeof(double));
 	double* input_x = (double*)malloc(batchlength * sizeof(double));
@@ -278,7 +283,8 @@ int main(int argc, char* argv[]) {
 	hipMalloc((void**)&outputBuffer, (batchlength) * sizeof(double));
 
 	FILE* fp_random = fopen("/home/centos/xwu/float.random.txt", "r");
-	FILE* fp_ret = fopen("/home/centos/xwu/hip__ddiv_rn.txt", "w");
+	//FILE* fp_ret = fopen("/home/centos/xwu/hip__ddiv_rn.txt", "w");
+	FILE* fp_ret = fopen("/dev/shm/hip__ddiv_rn.txt", "w");
 
 	hipEventCreate(&gpuStart);
 	hipEventCreate(&gpuEnd);
