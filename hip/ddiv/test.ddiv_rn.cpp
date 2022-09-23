@@ -241,6 +241,7 @@ __device__ double ___ddiv_rn(double y, double x) {
 
   uint32_t toosmall = 0x00055555;
   uint32_t two_neg_970 = 0x035b7333;
+  *(float *)q2_hi = __builtin_fmaf(0.0, *(float *)x0_hi, *(float *)q2_hi);
   if( abs(*(float *)q2_hi) > *(float *)&toosmall &&
     !(abs(*(float *)y0_hi) <= *(float *)& two_neg_970)){
     return q2;
