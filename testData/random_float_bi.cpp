@@ -1,0 +1,189 @@
+#include <climits>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <random>
+
+uint32_t getRandom(const uint32_t &begin = 0, const uint32_t &end = 100) {
+  return begin >= end ? 0
+                      : begin + (uint32_t)rand() * ((end - begin) / RAND_MAX);
+};
+
+
+std::random_device rd;     // Only used once to initialise (seed) engine
+std::mt19937 rng(rd());    // Random-number engine used (Mersenne-Twister in this case)
+std::uniform_int_distribution<uint32_t> uni(0,UINT32_MAX); // Guaranteed unbiased
+
+
+uint64_t values[151] = {0x0,
+                        0x0001,
+                        0x293,
+                        0x3cb,
+                        0x89,
+                        0x3ff,
+                        0x0400,
+                        0x36c5,
+                        0x2237,
+                        0x1d2b,
+                        0x3c00,
+                        0x690f,
+                        0x4efe,
+                        0x7200,
+                        0x7bff,
+                        0x7c00,
+                        0x7c01,
+                        0x7ccc,
+                        0x7c9e,
+                        0x7d3c,
+                        0x7dff,
+                        0x7e00,
+                        0x7f69,
+                        0x7e29,
+                        0x7f47,
+                        0x7fff,
+                        0x8000,
+                        0x8001,
+                        0x8276,
+                        0x8224,
+                        0x8365,
+                        0x83ff,
+                        0x8400,
+                        0x8e7d,
+                        0xbb83,
+                        0x8fa9,
+                        0x7bff,
+                        0xd7c7,
+                        0x9319,
+                        0xee7f,
+                        0xfc00,
+                        0xfc01,
+                        0xfc5e,
+                        0xfd7d,
+                        0xfc39,
+                        0xfdff,
+                        0xfe00,
+                        0xff94,
+                        0xffe7,
+                        0xfeb6,
+                        0xffff,
+                        0x62345a,
+                        0x57fa38,
+                        0x6b30aa,
+                        0x7fffff,
+                        0x00800000,
+                        0x1eddc5d6,
+                        0x37b4dd61,
+                        0x365d48d6,
+                        0x3f800000,
+                        0x4f8e3425,
+                        0x59a07b10,
+                        0x42034028,
+                        0x7f7fffff,
+                        0x7f800000,
+                        0x7f800001,
+                        0x7f9e6b7d,
+                        0x7fb8f866,
+                        0x7f8a1139,
+                        0x7fbfffff,
+                        0x7fc00000,
+                        0x7fd5c7ef,
+                        0x7fe91613,
+                        0x7ff26e80,
+                        0x7fffffff,
+                        0x80000000,
+                        0x80000001,
+                        0x802cf3ad,
+                        0x80688a43,
+                        0x806685fc,
+                        0x807fffff,
+                        0x80800000,
+                        0xb2995b8e,
+                        0xbb7fcb7e,
+                        0x91caa959,
+                        0xbf800000,
+                        0xec320dfd,
+                        0xde394e33,
+                        0xc52bc45c,
+                        0xff7fffff,
+                        0xff800000,
+                        0xff800001,
+                        0xff84fa0e,
+                        0xffb917b4,
+                        0xff85e208,
+                        0xffbfffff,
+                        0xffc00000,
+                        0xfff26210,
+                        0xfff51af1,
+                        0xffcbec6f,
+                        0xffffffff,
+                        0xba5454f5527bd,
+                        0xd88b763e22038,
+                        0xf68c569a5bcaf,
+                        0xfffffffffffff,
+                        0x0310000000000000,
+                        0x17ba633fb07b3ec4,
+                        0x1689a7a65afb16df,
+                        0x1768a6d02557277b,
+                        0x3ff0000000000000,
+                        0x5597ff95be071da1,
+                        0x7085c1be7d17668f,
+                        0x6b75cb0431b679b8,
+                        0x7fefffffffffffff,
+                        0x7ff0000000000000,
+                        0x7ff0000000000001,
+                        0x7ff44591eef24a4d,
+                        0x7ff405477f6b504a,
+                        0x7ff24f04fd87877e,
+                        0x7ff7ffffffffffff,
+                        0x7ff8000000000000,
+                        0x7ffb1a0b68eab28a,
+                        0x7ff9570a7b2e7159,
+                        0x7ffc40d5670bec1a,
+                        0x7fffffffffffffff,
+                        0x8000000000000000,
+                        0x8000000000000001,
+                        0x80067f2ff3f1bb76,
+                        0x8009fc25221095b7,
+                        0x800be459cf31af4c,
+                        0x800fffffffffffff,
+                        0x8010000000000000,
+                        0xb271f0c7aa831f58,
+                        0x89e22d207c1127b2,
+                        0xaa7a17ee5e2f28b9,
+                        0xbff0000000000000,
+                        0xfbdb65f51628f128,
+                        0xd09f236ed55ca69e,
+                        0xe8f577e00f310c45,
+                        0xffefffffffffffff,
+                        0xfff0000000000000,
+                        0xfff0000000000001,
+                        0xfff520cbe1f80023,
+                        0xfff53c6f31503f22,
+                        0xfff081b729106020,
+                        0xfff7ffffffffffff,
+                        0xfff8000000000000,
+                        0xfffb35ea1dac6e79,
+                        0xfffcbf76dc07c9e1,
+                        0xfffae2bec44efbc5,
+                        0xffffffffffffffff};
+
+int main(int argc, char *argv[]) {
+  freopen("/home/centos/xwu/float.random.txt", "w", stdout);
+
+  for(int i = 0; i < 151 ; i++){
+    for(int j = 0; j < 151; j++){
+      uint32_t x = values[i];
+      uint32_t y = values[j];
+      printf("%x %x\n", x, y);
+    }
+  }
+
+  for (uint64_t i = 0; i < (uint64_t)1024 * 10240000; i++) {
+
+    uint32_t x = uni(rng);
+    uint32_t y = uni(rng);
+    printf("%x %x\n", x, y);
+  }
+}
