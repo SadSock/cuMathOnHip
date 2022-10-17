@@ -67,16 +67,8 @@ __device__ float __fdiv_rz(float y, float x) {
     bool x_is_zero = false;
     bool y_is_zero = false;
     
-    if((y_u32 << 1) != 0){// y is nan/inf/denormal
-      y_is_zero = false;
-    }else{// y is zero
-      y_is_zero = true;
-    }
-    if((x_u32 << 1) != 0){// x is nan/inf/denormal
-      x_is_zero = false;
-    }else{// x is zero
-      x_is_zero = true;
-    }
+    y_is_zero = (y_u32 << 1) == 0;
+    x_is_zero = (x_u32 << 1) == 0;
     
     // 0.0 / 0.0 ??
     /*01f0*/
@@ -89,11 +81,7 @@ __device__ float __fdiv_rz(float y, float x) {
 
       if(x_not_inf || y_not_inf){
         /*0220*/
-        printf("hello /*0220*/\n");
-        uint32_t R8 = 0x1;
-        if(x_not_inf)
-          R8 = 0x0;
-        if(R8 || y_is_zero){// x is inf or y is zero
+        if( (!x_not_inf) || y_is_zero){// x is inf or y is zero
           //input_y = 0xc81aab7f;
           //input_x = 0x7f800000;
           float ret = 0;
@@ -102,12 +90,7 @@ __device__ float __fdiv_rz(float y, float x) {
           return ret;
         }
         /*0270*/                      
-        printf("hello /*0270*/\n");
-        uint32_t R5 = 0x1;
-        if(y_not_inf){
-          R5 = 0x0;
-        }
-        if(R5 || x_is_zero){// x is zero or y is inf
+        if( (!y_not_inf) || x_is_zero){// x is zero or y is inf
           //input_y = 0x7f800000;
           //input_x = 0xc81aab7f;
           float ret = 0;
@@ -197,21 +180,15 @@ __device__ float __fdiv_rz(float y, float x) {
   uint32_t &q2_u32 = *(uint32_t *)&q2;
   printf("q2 = %x\n", q2_u32);
   uint32_t q2_exp = ((*(uint32_t *)&q2) << 1) >> 24;
-  uint32_t dx_exp = q2_exp + y_exp - x_exp + fixup_exp - 1;
-  printf("y_exp = %x\n", y_exp);
-  printf("x_exp = %x\n", x_exp);
-  printf("fixup_exp = %x\n", fixup_exp);
-  printf("q2_exp = %x\n", q2_exp);
-  printf("dx_exp = %x\n", dx_exp);
+  uint32_t dx_exp = q2_exp + y_exp - x_exp + fixup_exp;
   /*0470*/
-  if (dx_exp > 0xfd) { // y is too small
-    printf("hello 04b0\n");
+  if (dx_exp - 1 > 0xfd) { // y is too small
     /*04b0*/
     float q3 = 0;
     uint32_t &q3_u32 = *(uint32_t *)&q3;
     /*04c0*/
     q3 = q2;
-    if((int32_t)(q2_exp + y_exp - x_exp + fixup_exp) > 0xfe){
+    if((int32_t)(dx_exp) > 0xfe){
       /*04d0*/
       printf("hello 04d0\n");
       // y = 0xea4ac567;
@@ -219,11 +196,9 @@ __device__ float __fdiv_rz(float y, float x) {
       q3_u32 = 0x7f7fffff;
     }else{
       /*04f0*/
-      if((int32_t)(q2_exp + y_exp - x_exp + fixup_exp) > 0){
-        ;
-      }else {
+      if((int32_t)(dx_exp) <= 0){
         /*0510*/
-        if ((int32_t)(q2_exp + y_exp - x_exp + fixup_exp) >= -0x18) {
+        if ((int32_t)(dx_exp) >= -0x18) {
           /*0520*/
           //input_y = 0x20dc8f49;
           //input_x = 0xe7a8f7b8;
@@ -231,9 +206,7 @@ __device__ float __fdiv_rz(float y, float x) {
           printf("q2_exp + y_exp - x_exp + fixup_exp = %x\n", q2_exp + y_exp - x_exp + fixup_exp);
           q3_u32 = q2_u32 & 0x7fffff;
           q3_u32 = q3_u32 | 0x800000;
-          printf("q3_u32 = %x\n", q3_u32);
-          q3_u32 = q3_u32 >> (1 - (q2_exp + y_exp - x_exp + fixup_exp));
-          printf("q3_u32 = %x\n", q3_u32);
+          q3_u32 = q3_u32 >> (1 - (dx_exp));
         }else{
           /*0530*/
           printf("hello 0530\n");
