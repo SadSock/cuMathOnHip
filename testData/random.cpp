@@ -163,22 +163,21 @@ uint64_t values[151] = {0x0,
                         0xffffffffffffffff};
 
 int main(int argc, char *argv[]) {
-  freopen("/home/centos/xwu/float.random.txt", "w", stdout);
+  freopen("/home/xwu/double.random.txt", "w", stdout);
   srandom(time(NULL));
   for (int i = 0; i < 151; i++) {
     for(int j = 0; j< 151; j++){
-      //double x = *(double *)&values[i];
-      //double y = *(double *)&values[j];
-      printf("%lx %lx\n", values[i], values[j]);
+      printf("%lx\n", values[i]);
+      printf("%lx\n", values[j]);
     }
   }
   
-  for (int i = 0; i < 1024 * 1024000; i++) {
+  for (int i = 0; i < 1024 * 20000; i++) {
     uint64_t x = getRandom(0, ULLONG_MAX);
     uint64_t y = getRandom(0, ULLONG_MAX);
     //r = r >> 32;
     //double out = *(double *)&r;
-    printf("%lx %lx\n", x, y);
+    printf("%lx\n", x);
     //printf("%a\n", out);
   }
 }
