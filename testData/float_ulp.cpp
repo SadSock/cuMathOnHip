@@ -11,12 +11,12 @@ union b32{
 
 int main(int argc, char* argv[]){
 
-    FILE *maca_file = fopen("/home/xwu/maca_tgamma.txt", "r");
-    FILE *cuda_file = fopen("/home/xwu/cuda_tgamma.txt", "r");
+    FILE *maca_file = fopen("/home/xwu/maca_tanhf.txt", "r");
+    FILE *cuda_file = fopen("/home/xwu/cuda_tanhf.txt", "r");
     FILE *data_file = fopen("/home/xwu/float.random.unary.txt", "r");
 
     uint32_t batch = 100;
-    uint32_t batchlength = 1024 * 1024;
+    uint32_t batchlength = 1024 * 1;
 
     for (int j = 0; j < batch; j++) {
         for (int i = 0; i < batchlength; i++) {
@@ -41,8 +41,8 @@ int main(int argc, char* argv[]){
             //double ulp = fabs(std::nexttoward(cret.f32, INFINITY) - cret.f32);
             //printf("ulp = %f\n",ulp);
             //double num = fabs((double)cret.f32-std::tgamma((double)data.f32))/ulp;
-            if(num - 3.0 > 0.0000001)
-                printf("num = %f data = %a maca = %a cuda = %a libc = %la\n",num, data.f32, mret.f32, cret.f32, std::tgamma((double)data.f32));
+            if(num - 1.0 > 0.0000001)
+                printf("num = %f data = %a maca = %a cuda = %a libc = %la\n",num, data.f32, mret.f32, cret.f32, std::tanh((double)data.f32));
             //input_x[i] = fabs(input_x[i]);
         }
     }

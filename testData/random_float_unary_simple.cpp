@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
         }
   }
 
-  for (uint64_t i = 0; i < (uint64_t)1024 * 102400; i++) {
+  for (uint64_t i = 0; i < (uint64_t)1024 * 100; i++) {
         uint32_t x = uni(rng);
         uint32_t y = uni(rng);
         printf("%x\n", x);
