@@ -170,7 +170,7 @@ uint64_t values[151] = {0x0,
                         0xffffffffffffffff};
 
 int main(int argc, char *argv[]) {
-  freopen("/home/xwu/float.random.unary.txt", "w", stdout);
+  freopen("/home/xwu/float.unary.txt", "w", stdout);
 
   for(int i = 0; i < 151 ; i++){
         for(int j = 0; j < 151; j++){
@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
         }
   }
 
-  for (uint64_t i = 0; i < (uint64_t)1024 * 100; i++) {
+  for (uint64_t i = 0; i < (uint64_t)10000 * 1000; i++) {
         uint32_t x = uni(rng);
         uint32_t y = uni(rng);
         printf("%x\n", x);
