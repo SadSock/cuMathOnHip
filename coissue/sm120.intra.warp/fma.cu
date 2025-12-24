@@ -63,16 +63,24 @@ int main() {
     std::vector<float> out(elem_count);
     cuMemcpyDtoH(out.data(), d_out, bytes);
 
-    unsigned long long total_cycles = 0;
-    for (auto c : cycles) {
-        total_cycles += c;
+    // unsigned long long total_cycles = 0;
+    // for (auto c : cycles) {
+    //     total_cycles += c;
+    // }
+
+    // unsigned long long total_cycles = 0;
+
+    for (size_t i = 0; i < cycles.size(); ++i) {
+      unsigned long long c = cycles[i];
+      printf("threads %zu = %llu\n", i, c);
     }
-    double avg_cycles = static_cast<double>(total_cycles) / lanes;
-    double avg_fma = avg_cycles / static_cast<double>(fma_insns);
-    std::printf("FMA latency: %.2f cycles/lane (sum %llu cycles across %u lanes)\n",
-                avg_cycles, total_cycles, lanes);
-    std::printf("Approximate latency per FMA: %.2f cycles over %u ops.\n",
-                avg_fma, fma_insns);
+
+    // double avg_cycles = static_cast<double>(total_cycles) / lanes;
+    // double avg_fma = avg_cycles / static_cast<double>(fma_insns);
+    // std::printf("FMA latency: %.2f cycles/lane (sum %llu cycles across %u lanes)\n",
+    //             avg_cycles, total_cycles, lanes);
+    // std::printf("Approximate latency per FMA: %.2f cycles over %u ops.\n",
+    //             avg_fma, fma_insns);
 
     bool ok = true;
     for (unsigned lane = 0; lane < lanes; ++lane) {

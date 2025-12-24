@@ -32,7 +32,7 @@ imad:
 		ptxas imad.ptx -arch=sm_120 -o imad.cubin
 		cuobjdump --dump-sass imad.cubin > imad.sass
 
-fma:
+fma: fma.cu
 		nvcc fma.cu -lcuda -o fma
 		ptxas fma.ptx -arch=sm_120 -o fma.cubin
 		cuobjdump --dump-sass fma.cubin > fma.sass

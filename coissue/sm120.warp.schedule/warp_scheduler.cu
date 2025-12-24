@@ -63,7 +63,7 @@ int main() {
     int prep_blocks = prop.multiProcessorCount * 2;
     float prep_src_a = static_cast<float>((clock() >> 8) & 0xFF) * 0.01f + 1.1f;
     float prep_src_b = static_cast<float>(clock() & 0xFF) * 0.01f + 0.9f;
-    warmup<<<prep_blocks, BLOCK_SIZE>>>(WARMUP_ITER,
+    warmup<<<prep_blocks, 1024>>>(WARMUP_ITER,
                                              prep_src_a, prep_src_b,
                                              d_prep_result);
     cudaDeviceSynchronize();
