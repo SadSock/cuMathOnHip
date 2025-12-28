@@ -7,7 +7,7 @@
 #define warpSize 32
 #define batch 20
 #define WARMUP_ITER 2000000    // 预热迭代次数，确保进入稳定频率
-#define ITER 1024 // 每个线程的迭代次数
+#define ITER 10240 // 每个线程的迭代次数
 
 __global__ void warmup(float src_a, float src_b,
                             float* result) {
@@ -30,7 +30,6 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
 
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int warpId = idx / warpSize;
-
 
   __shared__ float sfa[warpSize * 20];
   __shared__ float sfb[warpSize * 20];
@@ -67,20 +66,20 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
     __syncthreads();
     uint64_t start = clock64();
 
-    fc0 = fa0 * fb0 + 0;
-    fc1 = fa1 * fb1 + 0;
-    fc2 = fa2 * fb2 + 0;
-    fc3 = fa3 * fb3 + 0;
-    fc4 = fa4 * fb4 + 0;
+    fc0 = 1.0f;
+    fc1 = 1.0f;
+    fc2 = 1.0f;
+    fc3 = 1.0f;
+    fc4 = 1.0f;
 
     // code 1
 
-    for(int i = 1; i < ITER; i++){
-      fc0 = fa0 * fb0 + fc0;
-      fc1 = fa1 * fb1 + fc1;
-      fc2 = fa2 * fb2 + fc2;
-      fc3 = fa3 * fb3 + fc3;
-      fc4 = fa4 * fb4 + fc4;
+    for(int i = 0; i < ITER; i++){
+      fc0 = fa0 * fc0 + fb0;
+      fc1 = fa1 * fc1 + fb1;
+      fc2 = fa2 * fc2 + fb2;
+      fc3 = fa3 * fc3 + fb3;
+      fc4 = fa4 * fc4 + fb4;
     }
 
     uint64_t end = clock64();
@@ -121,20 +120,20 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
     __syncthreads();
     uint64_t start = clock64();
 
-    fc5 = fa5 * fb5 + 0;
-    fc6 = fa6 * fb6 + 0;
-    fc7 = fa7 * fb7 + 0;
-    fc8 = fa8 * fb8 + 0;
-    fc9 = fa9 * fb9 + 0;
+    fc5 = 1.0f;
+    fc6 = 1.0f;
+    fc7 = 1.0f;
+    fc8 = 1.0f;
+    fc9 = 1.0f;
 
     // code 2
 
-    for(int i = 1; i < ITER; i++){
-      fc5 = fa5 * fb5 + fc5;
-      fc6 = fa6 * fb6 + fc6;
-      fc7 = fa7 * fb7 + fc7;
-      fc8 = fa8 * fb8 + fc8;
-      fc9 = fa9 * fb9 + fc9;
+    for(int i = 0; i < ITER; i++){
+      fc5 = fa5 * fc5 + fb5;
+      fc6 = fa6 * fc6 + fb6;
+      fc7 = fa7 * fc7 + fb7;
+      fc8 = fa8 * fc8 + fb8;
+      fc9 = fa9 * fc9 + fb9;
     }
 
     uint64_t end = clock64();
@@ -176,20 +175,21 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
     __syncthreads();
     uint64_t start = clock64();
 
-    fc10 = fa10 * fb10 + 0;
-    fc11 = fa11 * fb11 + 0;
-    fc12 = fa12 * fb12 + 0;
-    fc13 = fa13 * fb13 + 0;
-    fc14 = fa14 * fb14 + 0;
+    fc10 = 1.0f;
+    fc11 = 1.0f;
+    fc12 = 1.0f;
+    fc13 = 1.0f;
+    fc14 = 1.0f;
 
     // code 2
 
-    for(int i = 1; i < ITER; i++){
-      fc10 = fa10 * fb10 + fc10;
-      fc11 = fa11 * fb11 + fc11;
-      fc12 = fa12 * fb12 + fc12;
-      fc13 = fa13 * fb13 + fc13;
-      fc14 = fa14 * fb14 + fc14;
+    for(int i = 0; i < ITER; i++){
+
+      fc10 = fa10 * fc10 + fb10;
+      fc11 = fa11 * fc11 + fb11;
+      fc12 = fa12 * fc12 + fb12;
+      fc13 = fa13 * fc13 + fb13;
+      fc14 = fa14 * fc14 + fb14;
     }
 
     uint64_t end = clock64();
@@ -230,20 +230,19 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
     __syncthreads();
     uint64_t start = clock64();
 
-    fc15 = fa15 * fb15 + 0;
-    fc16 = fa16 * fb16 + 0;
-    fc17 = fa17 * fb17 + 0;
-    fc18 = fa18 * fb18 + 0;
-    fc19 = fa19 * fb19 + 0;
+    fc15 = 1.0f;
+    fc16 = 1.0f;
+    fc17 = 1.0f;
+    fc18 = 1.0f;
+    fc19 = 1.0f;
 
     // code 2
-
-    for(int i = 1; i < ITER; i++){
-      fc15 = fa15 * fb15 + fc15;
-      fc16 = fa16 * fb16 + fc16;
-      fc17 = fa17 * fb17 + fc17;
-      fc18 = fa18 * fb18 + fc18;
-      fc19 = fa19 * fb19 + fc19;
+    for(int i = 0; i < ITER; i++){
+      fc15 = fa15 * fc15 + fb15;
+      fc16 = fa16 * fc16 + fb16;
+      fc17 = fa17 * fc17 + fb17;
+      fc18 = fa18 * fc18 + fb18;
+      fc19 = fa19 * fc19 + fb19;
     }
 
     uint64_t end = clock64();
@@ -302,7 +301,7 @@ int main() {
   cudaGetDeviceProperties(&prop, 0);
   int warm_blocks = prop.multiProcessorCount * 4;
 
-  for(uint64_t i = 0; i < 100; i++){
+  for(uint64_t i = 0; i < 0; i++){
     warmup<<<warm_blocks, 1024>>>(1.0, 1.0, d_warm_result);
   }
   cudaDeviceSynchronize();
