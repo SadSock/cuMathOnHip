@@ -1,3 +1,0 @@
-fma.cu
-
-用四个warp同时向一个SPs发射FMA指令，可以测到FMA指令的时延为1cycle，当向同一个SPs发射的warp小于4个时，测出的时延显著高于1cycle，特别是当warp数量只有一个时，测出的时延大约为3cycle。说明nVdia的指令发射单元在4个warp中轮询？
