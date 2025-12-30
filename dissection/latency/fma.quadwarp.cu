@@ -301,7 +301,7 @@ int main() {
   cudaGetDeviceProperties(&prop, 0);
   int warm_blocks = prop.multiProcessorCount * 4;
 
-  for(uint64_t i = 0; i < 0; i++){
+  for(uint64_t i = 0; i < 100; i++){
     warmup<<<warm_blocks, 1024>>>(1.0, 1.0, d_warm_result);
   }
   cudaDeviceSynchronize();

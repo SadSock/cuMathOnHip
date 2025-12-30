@@ -31,12 +31,10 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int warpId = idx / warpSize;
 
-  __shared__ float sfa[warpSize * 20];
   __shared__ float sfb[warpSize * 20];
 
   if(warpId == 0){
     for (int i = 0; i < batch; i++){
-      sfa[i * warpSize + idx] = fa[i * warpSize + idx];
       sfb[i * warpSize + idx] = fb[i * warpSize + idx];
     }
   }
@@ -45,17 +43,12 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
 
   if(warpId == 0){
 
-    float fa0, fb0, fc0;
-    float fa1, fb1, fc1;
-    float fa2, fb2, fc2;
-    float fa3, fb3, fc3;
-    float fa4, fb4, fc4;
+    float fb0, fc0;
+    float fb1, fc1;
+    float fb2, fc2;
+    float fb3, fc3;
+    float fb4, fc4;
 
-    fa0 = sfa[0 * warpSize +idx];
-    fa1 = sfa[1 * warpSize +idx];
-    fa2 = sfa[2 * warpSize +idx];
-    fa3 = sfa[3 * warpSize +idx];
-    fa4 = sfa[4 * warpSize +idx];
 
     fb0 = sfb[0 * warpSize +idx];
     fb1 = sfb[1 * warpSize +idx];
@@ -99,17 +92,12 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
     // 同一个SPs上的两个warp共同完成计算
     idx = idx - warpSize * 4;
 
-    float fa5, fb5, fc5;
-    float fa6, fb6, fc6;
-    float fa7, fb7, fc7;
-    float fa8, fb8, fc8;
-    float fa9, fb9, fc9;
+    float fb5, fc5;
+    float fb6, fc6;
+    float fb7, fc7;
+    float fb8, fc8;
+    float fb9, fc9;
 
-    fa5 = sfa[5 * warpSize +idx];
-    fa6 = sfa[6 * warpSize +idx];
-    fa7 = sfa[7 * warpSize +idx];
-    fa8 = sfa[8 * warpSize +idx];
-    fa9 = sfa[9 * warpSize +idx];
 
     fb5 = sfb[5 * warpSize +idx];
     fb6 = sfb[6 * warpSize +idx];
@@ -154,17 +142,11 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
     // 同一个SPs上的两个warp共同完成计算
     idx = idx - warpSize * 8;
 
-    float fa10, fb10, fc10;
-    float fa11, fb11, fc11;
-    float fa12, fb12, fc12;
-    float fa13, fb13, fc13;
-    float fa14, fb14, fc14;
-
-    fa10 = sfa[10 * warpSize +idx];
-    fa11 = sfa[11 * warpSize +idx];
-    fa12 = sfa[12 * warpSize +idx];
-    fa13 = sfa[13 * warpSize +idx];
-    fa14 = sfa[14 * warpSize +idx];
+    float fb10, fc10;
+    float fb11, fc11;
+    float fb12, fc12;
+    float fb13, fc13;
+    float fb14, fc14;
 
     fb10 = sfb[10 * warpSize +idx];
     fb11 = sfb[11 * warpSize +idx];
@@ -209,17 +191,11 @@ __global__ void fma_quad_warp(const float *fa, const float *fb, float *fc, uint6
     // 同一个SPs上的两个warp共同完成计算
     idx = idx - warpSize * 12;
 
-    float fa15, fb15, fc15;
-    float fa16, fb16, fc16;
-    float fa17, fb17, fc17;
-    float fa18, fb18, fc18;
-    float fa19, fb19, fc19;
-
-    fa15 = sfa[15 * warpSize +idx];
-    fa16 = sfa[16 * warpSize +idx];
-    fa17 = sfa[17 * warpSize +idx];
-    fa18 = sfa[18 * warpSize +idx];
-    fa19 = sfa[19 * warpSize +idx];
+    float fb15, fc15;
+    float fb16, fc16;
+    float fb17, fc17;
+    float fb18, fc18;
+    float fb19, fc19;
 
     fb15 = sfb[15 * warpSize +idx];
     fb16 = sfb[16 * warpSize +idx];
