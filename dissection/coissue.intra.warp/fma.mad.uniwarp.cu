@@ -9,7 +9,7 @@
 #define batchSize 10
 #define batchNum 2
 #define WARMUP_ITER 2000000    // 预热迭代次数，确保进入稳定频率
-#define ITER 10240 // 每个线程的迭代次数
+#define ITER 1024000 // 每个线程的迭代次数
 
 __global__ void warmup(float src_a, float src_b,
                             float* result) {
@@ -117,25 +117,33 @@ __global__ void fma_imad_uni_warp(const float *fa, const float fb, float *fc, co
   for(int i = 0; i < ITER; i++){
 
     fc0 = fa0  * fc0  + fb;
-    fc1 = fa1  * fc1  + fb;
-    fc2 = fa2  * fc2  + fb;
-    fc3 = fa3  * fc3  + fb;
-    fc4 = fa4  * fc4  + fb;
-    fc5 = fa5  * fc5  + fb;
-    fc6 = fa6  * fc6  + fb;
-    fc7 = fa7  * fc7  + fb;
-    fc8 = fa8  * fc8  + fb;
-    fc9 = fa9  * fc9  + fb;
-
     ic0 = ia0 * ic0 + ib;
+
+    fc1 = fa1  * fc1  + fb;
     ic1 = ia1 * ic1 + ib;
+
+    fc2 = fa2  * fc2  + fb;
     ic2 = ia2 * ic2 + ib;
+
+    fc3 = fa3  * fc3  + fb;
     ic3 = ia3 * ic3 + ib;
+
+    fc4 = fa4  * fc4  + fb;
     ic4 = ia4 * ic4 + ib;
+
+    fc5 = fa5  * fc5  + fb;
     ic5 = ia5 * ic5 + ib;
+
+    fc6 = fa6  * fc6  + fb;
     ic6 = ia6 * ic6 + ib;
+
+    fc7 = fa7  * fc7  + fb;
     ic7 = ia7 * ic7 + ib;
+
+    fc8 = fa8  * fc8  + fb;
     ic8 = ia8 * ic8 + ib;
+
+    fc9 = fa9  * fc9  + fb;
     ic9 = ia9 * ic9 + ib;
   }
 
