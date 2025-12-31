@@ -84,6 +84,7 @@ __global__ void fma_imad_bi_warp(const float *fa, const float fb, float *fc, con
 
     // code 1
 
+    #pragma unroll 10
     for(int i = 0; i < ITER; i++){
 
       fc0 = fa0  * fc0  + fb;
@@ -164,6 +165,7 @@ __global__ void fma_imad_bi_warp(const float *fa, const float fb, float *fc, con
 
 
     // code 1
+    #pragma unroll 10
     for(int i = 0; i < ITER; i++){
       ic0 = ia0 * ic0 + ib;
       ic1 = ia1 * ic1 + ib;
