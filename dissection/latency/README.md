@@ -1,3 +1,0 @@
-imul.quadwarp.cu
-
-测试mad指令在没有寄存器读写冲突的情况下lantency，为了防止出现寄存器读写冲突，第三个操作数是0，在5070ti上测出来是2cycle。
